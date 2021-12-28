@@ -1,87 +1,100 @@
-import sys
 from math import factorial
-from random import randint, random
-from prob import prob
-import binsim
-import markov
-import analys
+from stream import get_stream, mistakes_num, generate_mistakes
+import numpy as np
+import markov as m
 
 
-def get_stream(n):
-    stream = ''
-    for i in range(n):
-        stream += str(randint(0, 1) % 2)
+def get_blocks(stream):
+    blocks = []
+    for i in range(int(len(stream) / 4)):
+        m = []
+        for j in range(4):
+            m.append(stream[i * 4 + j])
+        blocks.append(np.matrix(m))
+    return blocks
+
+
+def get_codes(blocks, G):
+    codes = []
+    for m in blocks:
+        u = np.mod(m.dot(G), 2)
+        codes.append(u)
+    return codes
+
+
+def get_stream_from_codes(codes):
+    stream = []
+    for i in codes:
+        for j in np.array(i)[0]:
+            stream.append(j)
     return stream
 
 
-def mistakes_num(stream1, stream2):
-    num = 0
-    for i in range(len(stream1)):
-        if stream1[i] != stream2[i]:
-                   num += 1
-    return num
+def get_codes_from_stream(stream):
+    codes = []
+    for i in range(int(len(stream) / 7)):
+        c = []
+        for j in range(7):
+            c.append(stream[i*7 + j])
+        c = np.matrix(c)
+        # c = np.squeeze(c)
+        codes.append(c)
+    return codes
 
 
-def get_binom(n, p):
-    result = {}
-    k = 0
-    for k in range(n):
-        C = factorial(n) / (factorial(k) * factorial(n - k))
-        result[k] = (C * pow(p, k) * pow(1 - p, n - k))
-
-    return result
+def get_sindroms(codes, H):
+    sindroms = []
+    for u in codes:
+        S = np.mod(H.dot(u.transpose()), 2)
+        sindroms.append(S)
+    return sindroms
 
 
-def get_distr(start, end, h, p):
-    result = []
-    i = start
-    while i <= end:
-        stream = get_stream(i)
-        e = binsim.get_mistakes(i, p)
-        m_stream = binsim.generate_mistake(stream, e)
-        m_num = mistakes_num(stream, m_stream)
-        pm = m_num/i
-        n = 1000
-        # inums = analys.get_inums(e, n)
-        # print(f'ошибок на {n} бит: ')
-        # print(inums)
-        eps = abs((p-pm)/p)
-        result.append([i, m_num, p, pm, eps])
-        i *= h
-    return result
-        
+def calc_mistakes(sindroms):
+    mistakes = []
+    for s in sindroms:
+        k = 0
+        for i in range(3):
+            k += (np.array(s)[2-i][0]*(2**i))
+        mistakes.append(k)
+    return mistakes
+
 
 if __name__ == '__main__':
-    # print('Двоично-симметричный канал.')
-    # p = float(input('Вероятность ошибки: '))
-    # if p > 1 or p < 0:
-    #     print('Нельзя...')
-    #     sys.exit()
-    #
-    # dist = get_distr(100, 100000, 2, p)
-    # print('           n    |           i     |           p     |           pi    |        (p-pi)/p ')
-    # print('__________________________________________________________________________________________________________')
-    # symb = 15
-    # for i in dist:
-    #     pyplot.plot(i[0], i[4], "b.")
-    #     print(f'{i[0]:{symb}} | {i[1]:{symb}} | {i[2]:{symb}} | {i[3]:{symb}} |  {i[4]:{symb}}')
+    H = np.matrix([[0, 0, 0, 1, 1, 1, 1],
+                   [0, 1, 1, 0, 0, 1, 1],
+                   [1, 0, 1, 0, 1, 0, 1]])
 
-    print('Марковская модель.')
-    p1 = float(input('Вероятность ошибки, если не было : '))
-    p2 = float(input('Вероятность ошибки, если была: '))
+    G = np.matrix([[1, 1, 1, 0, 0, 0, 0],
+                   [1, 0, 0, 1, 1, 0, 0],
+                   [0, 1, 0, 1, 0, 1, 0],
+                   [1, 1, 0, 1, 0, 0, 1]])
 
-    n = 10000
-
+    n = 4
     stream = get_stream(n)
-    m_e = markov.get_mistakes(n, p1, p2)
-    markov_stream = binsim.generate_mistake(stream, m_e)
-    m_num = mistakes_num(stream, markov_stream)
-    pm = m_num / n
+    print(f'Поток без кодов: {stream}')
+    blocks = get_blocks(stream)
+    codes = get_codes(blocks, G)
+    code_stream = get_stream_from_codes(codes)
 
-    # block_len = int(n / 100)
-    # inums = analys.get_inums(m_e, block_len)
+    p_good_mistake = 0.28  # float(input('Вероятность ошибки в хорошем состоянии : '))
+    p_bad_mistake = 0.7  # float(input('Вероятность ошибки в плохом состоянии: '))
+    p_to_good = 0.01  # float(input('Вероятность попасть в хорошее состояние: '))
+    p_to_bad = 0.001  # float(input('Вероятность попасть в плохое состояние: '))
 
-    # print(inums)
+    e = m.get_mistakes(len(code_stream), p_good_mistake, p_bad_mistake, p_to_good, p_to_bad)
+    m_stream = generate_mistakes(code_stream, e)
 
-    print(f'Битов: {n}, Ошибок: {m_num}')
-    print(f'Оценка вероятности ошибки: {pm}')
+    print(f'Поток с кодами: {code_stream}')
+    print(f'Вектор ошибок: {e}')
+    print(f'Поток с ошибками: {m_stream}')
+
+    codes = get_codes_from_stream(m_stream)
+    sindroms = get_sindroms(codes, H)
+    mistakes = calc_mistakes(sindroms)
+    print(mistakes)
+    # m = np.matrix([0, 0, 1, 1])
+    # u = np.mod(m.dot(G), 2)
+    # S = np.mod(H.dot(u.transpose()), 2)
+
+

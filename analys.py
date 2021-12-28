@@ -1,4 +1,15 @@
 from numpy import array
+from math import factorial
+
+
+def get_binom(n, p):
+    result = {}
+    k = 0
+    for k in range(n):
+        C = factorial(n) / (factorial(k) * factorial(n - k))
+        result[k] = (C * pow(p, k) * pow(1 - p, n - k))
+
+    return result
 
 
 def get_inums(e, n):
