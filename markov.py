@@ -1,6 +1,7 @@
 from prob import prob
-from stream import get_stream, mistakes_num, generate_mistakes
+from stream import get_stream, mistakes_num, generate_mistakes, get_distr
 from analys import get_binom
+from matplotlib import pyplot as pl
 
 
 def get_mistakes(num, p_good_mistake, p_bad_mistake, p_to_good, p_to_bad):
@@ -21,10 +22,8 @@ def get_mistakes(num, p_good_mistake, p_bad_mistake, p_to_good, p_to_bad):
     return result
 
 
-def get_distr(stream_len, block_len, p_good_mistake, p_bad_mistake, p_to_good, p_to_bad):
+def get_markov_distr(stream_len, block_len, p_good_mistake, p_bad_mistake, p_to_good, p_to_bad):
     result = []
-    k = [0] * block_len
-
     stream = get_stream(stream_len)
     e = get_mistakes(stream_len, p_good_mistake, p_bad_mistake, p_to_good, p_to_bad)
     m_stream = generate_mistakes(stream, e)
@@ -33,33 +32,28 @@ def get_distr(stream_len, block_len, p_good_mistake, p_bad_mistake, p_to_good, p
     block_num = int(stream_len / block_len)
     inums = [0]*block_num
 
-    for i in range(block_num):
-        for j in range(block_len):
-            if e[i*block_len + j] == 1:
-                inums[i] += 1
+    # pm = mistakes_num(stream, m_stream) / stream_len
+    k, pm = get_distr(e, block_len)
 
-    for i in inums:
-        k[i] += 1
-
-    for i in range(len(k)):
-        k[i] /= block_num
-
-    return k
+    return k, pm
 
 
 if __name__ == '__main__':
     print('Марковская модель.')
-    p_good_mistake = 0.5  # float(input('Вероятность ошибки в хорошем состоянии : '))
-    p_bad_mistake = 0.7  # float(input('Вероятность ошибки в плохом состоянии: '))
-    p_to_good = 0.01  # float(input('Вероятность попасть в хорошее состояние: '))
-    p_to_bad = 0.001  # float(input('Вероятность попасть в плохое состояние: '))
+    p_good_mistake = 0.01  # float(input('Вероятность ошибки в хорошем состоянии : '))
+    p_bad_mistake = 0.1  # float(input('Вероятность ошибки в плохом состоянии: '))
+    p_to_good = 0.9  # float(input('Вероятность попасть в хорошее состояние: '))
+    p_to_bad = 0.6  # float(input('Вероятность попасть в плохое состояние: '))
 
-    n = 10000
-
-    binom = get_binom(100, p_good_mistake)
-    k = get_distr(10000, 100,  p_good_mistake, p_bad_mistake, p_to_good, p_to_bad)
+    n = 1000000
+    block_len = 100
+    binom = get_binom(block_len, p_good_mistake)
+    k, pm = get_markov_distr(10000, block_len,  p_good_mistake, p_bad_mistake, p_to_good, p_to_bad)
     print('           n    |           i     |           p      ')
     print('___________________________________________________')
-    symb = 10
+    symb = 5
     for i in range(len(k)):
-        print(f'{i:{symb}} | {binom[i]:{symb}} | {k[i]:{symb}}')
+        pl.plot(i, binom[i], '.b')
+        pl.plot(i, k[i], '.r')
+        print(f'{i:{symb}} | {binom[i]:.8f} | {k[i]:{symb}}')
+    pl.show()

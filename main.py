@@ -2,6 +2,8 @@ from math import factorial
 from stream import get_stream, mistakes_num, generate_mistakes
 import numpy as np
 import markov as m
+import binsim as b
+from analys import get_inums, get_parameters
 
 
 def get_blocks(stream):
@@ -70,17 +72,20 @@ if __name__ == '__main__':
                    [0, 1, 0, 1, 0, 1, 0],
                    [1, 1, 0, 1, 0, 0, 1]])
 
-    n = 4
+    n = 1000
+
     stream = get_stream(n)
     print(f'Поток без кодов: {stream}')
     blocks = get_blocks(stream)
     codes = get_codes(blocks, G)
     code_stream = get_stream_from_codes(codes)
 
-    p_good_mistake = 0.28  # float(input('Вероятность ошибки в хорошем состоянии : '))
+    p_good_mistake = 0.01  # float(input('Вероятность ошибки в хорошем состоянии : '))
     p_bad_mistake = 0.7  # float(input('Вероятность ошибки в плохом состоянии: '))
     p_to_good = 0.01  # float(input('Вероятность попасть в хорошее состояние: '))
     p_to_bad = 0.001  # float(input('Вероятность попасть в плохое состояние: '))
+
+    p = 0.15
 
     e = m.get_mistakes(len(code_stream), p_good_mistake, p_bad_mistake, p_to_good, p_to_bad)
     m_stream = generate_mistakes(code_stream, e)
@@ -91,8 +96,13 @@ if __name__ == '__main__':
 
     codes = get_codes_from_stream(m_stream)
     sindroms = get_sindroms(codes, H)
-    mistakes = calc_mistakes(sindroms)
-    print(mistakes)
+    inums = get_inums(e, 7)
+    sindroms_num = calc_mistakes(sindroms)
+    # print(inums)
+    # print(sindroms_num)
+    mistakes, detected, correct = get_parameters(sindroms_num, inums, 3)
+    print(f'Ошибочно: {mistakes}, Обнаружено: {detected}, Правильно: {correct}')
+    print(f'Pош: {mistakes / (n/4)}, Pоб: {detected / (n/4)}, Pпр: {correct / (n/4)}')
     # m = np.matrix([0, 0, 1, 1])
     # u = np.mod(m.dot(G), 2)
     # S = np.mod(H.dot(u.transpose()), 2)

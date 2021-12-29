@@ -27,15 +27,19 @@ def get_s(H, e):
     return H.dot(e)
 
 
-def get_parameters(e, block_len, d, H):
-    inums = get_inums(e, block_len)
+def get_parameters(sindroms, inums, d):
     mistakes = 0
     detected = 0
     correct = 0
-    for i in inums:
-        if i == 0:
+    for i in range(len(inums)):
+        if inums[i] == 0:
             correct += 1
-        elif 0 < i < d:
+        elif 0 < inums[i] < d:
             detected += 1
         else:
-            s = get_s(H, e)
+            s = sindroms[i]
+            if s == 0:
+                mistakes += 1
+            else:
+                detected += 1
+    return mistakes, detected, correct
