@@ -1,7 +1,10 @@
 from random import randint, random
 
+"""Различные функции для работы с потоками бит"""
+
 
 def get_stream(n):
+    """Генерация потока бит длины n"""
     stream = []
     for i in range(n):
         stream.append(randint(0, 1) % 2)
@@ -9,6 +12,7 @@ def get_stream(n):
 
 
 def mistakes_num(stream1, stream2):
+    """Подсчёт клличества ошибок по двум потокам"""
     num = 0
     for i in range(len(stream1)):
         if stream1[i] != stream2[i]:
@@ -17,6 +21,7 @@ def mistakes_num(stream1, stream2):
 
 
 def generate_mistakes(stream, e):
+    """Генерация вектора ошибок"""
     result = []
     for i in range(len(stream)):
         result.append((stream[i] ^ e[i]))
@@ -24,6 +29,7 @@ def generate_mistakes(stream, e):
 
 
 def get_distr(e, block_len):
+    """Подсчёт вероятности количеств ошибок на блоке"""
     stream_len = len(e)
     block_num = int(stream_len / block_len)
     inums = [0] * block_num

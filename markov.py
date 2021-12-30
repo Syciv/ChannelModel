@@ -1,10 +1,13 @@
 from prob import prob
 from stream import get_stream, mistakes_num, generate_mistakes, get_distr
-from analys import get_binom
+from analys import get_binom_distr
 from matplotlib import pyplot as pl
+
+"""Моделированик марковского канала"""
 
 
 def get_mistakes(num, p_good_mistake, p_bad_mistake, p_to_good, p_to_bad):
+    """Генерация вектора ошибок с заданными вероятностями ошибки и переходов состояний"""
     result = []
     state = 1  # 1 - хорошее 0 - плохое
     for i in range(num):
@@ -23,6 +26,7 @@ def get_mistakes(num, p_good_mistake, p_bad_mistake, p_to_good, p_to_bad):
 
 
 def get_markov_distr(stream_len, block_len, p_good_mistake, p_bad_mistake, p_to_good, p_to_bad):
+    """Подсчёт вероятности количеств ошибок на блоке"""
     result = []
     stream = get_stream(stream_len)
     e = get_mistakes(stream_len, p_good_mistake, p_bad_mistake, p_to_good, p_to_bad)
@@ -41,16 +45,16 @@ def get_markov_distr(stream_len, block_len, p_good_mistake, p_bad_mistake, p_to_
 if __name__ == '__main__':
     print('Марковская модель.')
     p_good_mistake = 0.01  # float(input('Вероятность ошибки в хорошем состоянии : '))
-    p_bad_mistake = 0.1  # float(input('Вероятность ошибки в плохом состоянии: '))
-    p_to_good = 0.9  # float(input('Вероятность попасть в хорошее состояние: '))
-    p_to_bad = 0.6  # float(input('Вероятность попасть в плохое состояние: '))
+    p_bad_mistake = 0.2  # float(input('Вероятность ошибки в плохом состоянии: '))
+    p_to_good = 0.01  # float(input('Вероятность попасть в хорошее состояние: '))
+    p_to_bad = 0.01  # float(input('Вероятность попасть в плохое состояние: '))
 
-    n = 1000000
+    n = 100000
     block_len = 100
-    binom = get_binom(block_len, p_good_mistake)
-    k, pm = get_markov_distr(10000, block_len,  p_good_mistake, p_bad_mistake, p_to_good, p_to_bad)
-    print('           n    |           i     |           p      ')
-    print('___________________________________________________')
+    binom = get_binom_distr(block_len, p_good_mistake)
+    k, pm = get_markov_distr(n, block_len,  p_good_mistake, p_bad_mistake, p_to_good, p_to_bad)
+    print('  n   |     i      |  p      ')
+    print('_________________________')
     symb = 5
     for i in range(len(k)):
         pl.plot(i, binom[i], '.b')
